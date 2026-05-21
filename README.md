@@ -21,7 +21,7 @@ Grok2API 是一个基于 **FastAPI** 构建的 Grok 网关，支持将 Grok Web 
 - 支持多账号池、层级选号、失败反馈、额度同步与自动维护
 - 支持本地缓存图片、视频与本地代理链接返回
 - 支持文生图、图像编辑、文生视频、图生视频
-- **Console API 模式**：支持 `grok-4.3`、`grok-4`、`grok-4.20` 等模型，basic 账号即可使用全部模型
+- **多版本模型支持**：grok-4.20 0309 系列、grok-4.3-beta 等，覆盖 basic/super/heavy 全账号层级
 - **账号 Lockout 机制**：防止同一账号被并发请求重复选中，提升轮转效率
 - **账号导入/导出**：支持批量导入 SSO token，支持导出全部账号 token
 - **Downstream 下游开关**：可独立控制各 API 端点的下游访问权限
@@ -243,19 +243,6 @@ docker compose up -d
 
 ## 模型支持
 > 可通过 `GET /v1/models` 获取当前支持模型列表。
-
-### Chat - Console API（basic 账号可用）
-
-通过 SSO Cookie 直接调用 `console.x.ai`，basic 账号即可使用所有模型。速率限制由 console.x.ai 控制（免费 tier: 1 rps / 60 RPM）。
-
-| 模型名 | Console 模型 | 默认思考强度 | 说明 |
-| :-- | :-- | :-- | :-- |
-| `grok-4.3` | `grok-4.3` | `high` | Grok 4.3，最新均衡模型 |
-| `grok-4` | `grok-4` | `high` | Grok 4，通用强模型 |
-| `grok-4.20` | `grok-4.20` | `high` | Grok 4.20，稳定版 |
-| `grok-4.20-reasoning` | `grok-4.20-0309-reasoning` | - | 推理型，适合复杂分析 |
-| `grok-4.20-non-reasoning` | `grok-4.20-0309-non-reasoning` | - | 非推理型，速度快 |
-| `grok-4.20-multi-agent` | `grok-4.20-multi-agent-0309` | - | 多智能体，适合复杂任务 |
 
 ### Chat - Web API
 
