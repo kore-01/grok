@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title data-i18n="downstream.pageTitle">Grok2API - 下游管理</title>
+  <link rel="icon" href="/favicon.ico?v={{APP_VERSION}}">
+  <link href="https://cdn.jsdelivr.net/npm/geist@1.0.0/dist/fonts/geist-sans/style.css" rel="stylesheet">
+  <link href="/static/css/app.css?v={{APP_VERSION}}" rel="stylesheet">
+  <style>
+    body { background: #FAF9F5 }
+
+    .page-hd   { display:flex; align-items:flex-start; justify-content:space-between; margin-bottom:20px }
+    .page-title{ font-size:22px; font-weight:700; line-height:1.2 }
+    .page-sub  { font-size:13px; color:var(--fg-muted); margin-top:5px }
+    .page-actions { display:flex; gap:8px; align-items:center; flex-shrink:0 }
+
+    .page-action-btn {
+      height:32px; padding:0 14px; border-radius:999px;
+      display:inline-flex; align-items:center; justify-content:center; gap:6px;
+      font-size:13px; font-weight:600;
+      border:1px solid #e6e6e6; background:#fafafa; color:#444;
+    }
+    .page-action-btn:hover { background:#f3f3f3; border-color:#dcdcdc }
+    .page-action-btn-primary { background:#111; border-color:#111; color:#fff }
+    .page-action-btn-primary:hover { background:#222; border-color:#222 }
+    .page-action-btn:disabled { opacity:.4; pointer-events:none }
+
+    .ds-card {
+      background:#fff; border:none; border-radius:12px; overflow:hidden; margin-bottom:12px;
+    }
+
+    .ds-table { width:100%; border-collapse:collapse }
+    .ds-table th {
+      font-size:11px; font-weight:700; color:#8d8d8d; text-transform:uppercase; letter-spacing:.08em;
+      padding:12px 16px; text-align:left; background:#fff; border-bottom:1px solid #f5f5f5;
+    }
+    .ds-table td {
+      padding:14px 16px; border-bottom:1px solid #f5f5f5; font-size:13px; color:#333;
+      vertical-align:middle;
+    }
+    .ds-table tr:last-child td { border-bottom:none }
+    .ds-table tr:hover td { background:#fcfcfc }
+
+    .ds-name { font-weight:600; color:#222 }
+    .ds-path { font-family:'Geist Mono','Courier New',monospace; font-size:12px; color:#666; background:#f5f5f5; padding:2px 8px; border-radius:6px; display:inline-block }
+    .ds-key { font-family:'Geist Mono','Courier New',monospace; font-size:11px; color:#999 }
+
+    .toggle {
+      position:relative; display:inline-block; width:36px; height:20px; flex-shrink:0;
+    }
+    .toggle input { opacity:0; width:0; height:0 }
+    .toggle-track {
+      position:absolute; cursor:pointer; inset:0;
+      background:#ddd; border-radius:20px; transition:background .2s;
+    }
+    .toggle-track::before {
+      content:''; position:absolute; width:14px; height:14px;
+      left:3px; bottom:3px; background:#fff; border-radius:50%;
+      transition:transform .2s; box-shadow:0 1px 2px rgba(0,0,0,.15);
+    }
+    .toggle input:checked + .toggle-track { background:#111 }
+    .toggle input:checked + .toggle-track::before { transform:translateX(16px) }
+
+    .ds-status {
+      display:inline-flex; align-items:center; gap:6px;
+      font-size:12px; font-weight:500;
+    }
+    .ds-status-dot { width:6px; height:6px; border-radius:50% }
+    .ds-status.on  { color:#16a34a }
+    .ds-status.on  .ds-status-dot { background:#22c55e }
+    .ds-status.off { color:#dc2626 }
+    .ds-status.off .ds-status-dot { background:#ef4444 }
+
+    .save-bar {
+      position:fixed; left:50%; bottom:18px; z-index:50;
+      width:min(calc(100% - 56px), 1280px);
+      transform:translate(-50%, calc(100% + 20px));
+      background:rgba(255,255,255,.96);
+      border:1px solid #efefef; border-radius:16px;
+      box-shadow:0 8px 32px rgba(0,0,0,.08);
+      display:flex; align-items:center; justify-content:space-between;
+      gap:12px; padding:10px 16px;
+      transition:transform .3s cubic-bezier(.34,1.56,.64,1), opacity .25s;
+      opacity:0; pointer-events:none;
+    }
+    .save-bar.visible { transform:translate(-50%,0); opacity:1; pointer-events:auto }
+    .save-bar-msg { font-size:13px; font-weight:500; color:#444 }
+    .save-bar-actions { display:flex; gap:8px }
+    .save-bar-btn {
+      height:32px; padding:0 14px; border-radius:999px; font-size:13px; font-weight:600; cursor:pointer;
+      border:1px solid transparent; transition:background .15s, border-color .15s;
+    }
+    .save-bar-btn-cancel { background:#fafafa; border-color:#e6e6e6; color:#444 }
+    .save-bar-btn-cancel:hover { background:#f3f3f3 }
+    .save-bar-btn-save { background:#111; border-color:#111; color:#fff }
+    .save-bar-btn-save:hover { background:#222; border-color:#222 }
+    .save-bar-btn:disabled { opacity:.4; pointer-events:none }
+
+    .loading-overlay {
+      position:absolute; inset:0; background:rgba(255,255,255,.85);
+      display:flex; align-items:center; justify-content:center; z-index:10;
+      border-radius:12px; opacity:0; pointer-events:none; transition:opacity .2s;
+    }
+    .loading-overlay.active { opacity:1; pointer-events:auto }
+    .spinner { width:18px; height:18px; border:2px solid #eee; border-top-color:#111; border-radius:50%; animation:spin .8s linear infinite }
+    @keyframes spin { to { transform:rotate(360deg) } }
+  </style>
+</head>
+<body>
+
+<!-- ── Admin header ─────────────────────────────────────────────────────────── -->
+<div id="admin-header" data-active="/admin/downstream"></div>
+
+<main class="admin-main" id="ds-main">
+  <div class="page-hd">
+    <div>
+      <div class="page-title" data-i18n="downstream.pageTitle">下游管理</div>
+      <div class="page-sub" data-i18n="downstream.pageSubtitle">控制各下游 API 端点的暴露状态</div>
+    </div>
+    <div class="page-actions">
+      <button id="btn-save" onclick="doSave()" class="page-action-btn page-action-btn-primary" disabled>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m5 12 4.2 4.2L19 6.5"/></svg>
+        <span data-i18n="downstream.save">保存</span>
+      </button>
+    </div>
+  </div>
+
+  <div class="ds-card" style="position:relative">
+    <div class="loading-overlay" id="loading-overlay">
+      <div class="spinner"></div>
+    </div>
+    <table class="ds-table">
+      <thead>
+        <tr>
+          <th data-i18n="downstream.colInterface">接口</th>
+          <th data-i18n="downstream.colPath">路径</th>
+          <th data-i18n="downstream.colKey">配置项</th>
+          <th data-i18n="downstream.colStatus">状态</th>
+          <th style="text-align:right" data-i18n="downstream.colToggle">开关</th>
+        </tr>
+      </thead>
+      <tbody id="ds-body"></tbody>
+    </table>
+  </div>
+</main>
+
+<!-- ── Save bar ─────────────────────────────────────────────────────────────── -->
+<div class="save-bar" id="save-bar">
+  <div class="save-bar-msg" id="save-bar-msg" data-i18n="downstream.unsaved">存在未保存的更改</div>
+  <div class="save-bar-actions">
+    <button class="save-bar-btn save-bar-btn-cancel" onclick="doReset()" data-i18n="downstream.discard">撤销</button>
+    <button class="save-bar-btn save-bar-btn-save"   onclick="doSave()" data-i18n="downstream.saveBar">保存</button>
+  </div>
+</div>
+
+<script src="/static/js/i18n.js?v={{APP_VERSION}}"></script>
+<script src="/static/js/auth.js?v={{APP_VERSION}}"></script>
+<script src="/static/js/admin-header.js?v={{APP_VERSION}}"></script>
+<script src="/static/js/toast.js?v={{APP_VERSION}}"></script>
+<script src="/static/js/footer.js?v={{APP_VERSION}}"></script>
+<script>
+// ── Endpoint schema ──────────────────────────────────────────────────────────
+const ENDPOINTS = [
+  { name: 'Chat Completions', nameKey: 'downstream.epChat', path: '/v1/chat/completions', configKey: 'chat_completions' },
+  { name: 'Responses API',    nameKey: 'downstream.epResponses', path: '/v1/responses',        configKey: 'responses' },
+  { name: 'Images Generations', nameKey: 'downstream.epImages',  path: '/v1/images/generations', configKey: 'images' },
+  { name: 'Images NSFW',      nameKey: 'downstream.epImagesNsfw', path: '/v1/images/generations/nsfw', configKey: 'images_nsfw' },
+  { name: 'Models',           nameKey: 'downstream.epModels',    path: '/v1/models',           configKey: 'models' },
+  { name: 'Files',            nameKey: 'downstream.epFiles',     path: '/v1/files/*',          configKey: 'files' },
+];
+
+let _cfg = {};          // loaded config
+let _dirty = {};        // { configKey: newBool }
+let _configLoaded = false;
+
+function tr(key, fallback) {
+  if (!key) return fallback ?? '';
+  const value = t(key);
+  return value === key ? (fallback ?? key) : value;
+}
+
+function setLoading(v) {
+  document.getElementById('loading-overlay').classList.toggle('active', v);
+}
+
+function setSaveBar(v) {
+  document.getElementById('save-bar').classList.toggle('visible', v);
+}
+
+function hasDirty() {
+  return Object.keys(_dirty).length > 0;
+}
+
+function refreshUI() {
+  const btnSave = document.getElementById('btn-save');
+  btnSave.disabled = !hasDirty();
+  setSaveBar(hasDirty());
+  renderTable();
+}
+
+function getValue(configKey) {
+  if (configKey in _dirty) return _dirty[configKey];
+  return _cfg?.downstream?.[configKey] ?? true;
+}
+
+function toggle(configKey) {
+  const current = getValue(configKey);
+  const next = !current;
+  if (next === (_cfg?.downstream?.[configKey] ?? true)) {
+    delete _dirty[configKey];
+  } else {
+    _dirty[configKey] = next;
+  }
+  refreshUI();
+}
+
+function doReset() {
+  _dirty = {};
+  refreshUI();
+}
+
+async function doSave() {
+  if (!hasDirty()) return;
+  const btnSave = document.getElementById('btn-save');
+  btnSave.disabled = true;
+  setLoading(true);
+
+  const patch = { downstream: {} };
+  for (const [k, v] of Object.entries(_dirty)) {
+    patch.downstream[k] = v;
+  }
+
+  try {
+    const key = await adminKey.get();
+    const res = await fetch('/admin/api/config', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + key,
+      },
+      body: JSON.stringify(patch),
+    });
+    const data = await res.json();
+    if (!res.ok || data.status !== 'success') {
+      throw new Error(data.message || '保存失败');
+    }
+    // Merge saved values into _cfg
+    if (!_cfg.downstream) _cfg.downstream = {};
+    Object.assign(_cfg.downstream, _dirty);
+    _dirty = {};
+    refreshUI();
+    showToast(tr('downstream.saveSuccess', '配置已保存'), 'success');
+  } catch (err) {
+    showToast(tr('downstream.saveError', '保存失败') + ': ' + err.message, 'error');
+  } finally {
+    setLoading(false);
+    btnSave.disabled = !hasDirty();
+  }
+}
+
+function renderTable() {
+  const tbody = document.getElementById('ds-body');
+  tbody.innerHTML = ENDPOINTS.map(ep => {
+    const val = getValue(ep.configKey);
+    const checked = val ? 'checked' : '';
+    const statusClass = val ? 'on' : 'off';
+    const statusText = val ? tr('downstream.statusOn', '已开启') : tr('downstream.statusOff', '已关闭');
+    return `<tr>
+      <td><span class="ds-name">${tr(ep.nameKey, ep.name)}</span></td>
+      <td><code class="ds-path">${ep.path}</code></td>
+      <td><span class="ds-key">downstream.${ep.configKey}</span></td>
+      <td>
+        <span class="ds-status ${statusClass}">
+          <span class="ds-status-dot"></span>${statusText}
+        </span>
+      </td>
+      <td style="text-align:right">
+        <label class="toggle" title="${tr('downstream.toggleTip', '切换开关')}">
+          <input type="checkbox" ${checked} onchange="toggle('${ep.configKey}')">
+          <span class="toggle-track"></span>
+        </label>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+async function loadConfig() {
+  setLoading(true);
+  try {
+    const key = await adminKey.get();
+    const res = await fetch('/admin/api/config', {
+      headers: { 'Authorization': 'Bearer ' + key },
+    });
+    if (!res.ok) {
+      const errData = await res.json().catch(() => ({}));
+      throw new Error(errData.detail || '加载配置失败 (HTTP ' + res.status + ')');
+    }
+    _cfg = await res.json();
+    _configLoaded = true;
+    renderTable();
+  } catch (err) {
+    showToast(tr('downstream.loadError', '加载配置失败') + ': ' + err.message, 'error');
+  } finally {
+    setLoading(false);
+  }
+}
+
+(async () => {
+  await waitI18n();
+  const key = await adminKey.get();
+  if (!key) { location.href = '/admin/login'; return; }
+  await renderAdminHeader();
+  await loadConfig();
+  refreshUI();
+})();
+</script>
+</body>
+</html>

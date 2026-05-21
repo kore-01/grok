@@ -59,6 +59,11 @@ async def admin_cache():
     return _serve_html("admin/cache.html")
 
 
+@router.get("/admin/downstream", include_in_schema=False)
+async def admin_downstream():
+    return _serve_html("admin/downstream.html")
+
+
 # --- WebUI ---
 @router.get("/webui", include_in_schema=False)
 async def webui_root():

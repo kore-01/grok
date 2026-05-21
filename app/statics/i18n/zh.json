@@ -20,6 +20,7 @@
     "account": "账户管理",
     "config": "配置管理",
     "cache": "缓存管理",
+    "downstream": "下游管理",
     "languageLabel": "语言",
     "logout": "退出登录",
     "versionDialogTitle": "版本信息",
@@ -699,5 +700,30 @@
     "startFailed": "启动失败：{message}",
     "cancelInProgress": "已暂停，请耐心等待本批次完成…",
     "na": "—"
+  },
+  "downstream": {
+    "pageTitle": "Grok2API - 下游管理",
+    "pageSubtitle": "控制各下游 API 端点的暴露状态",
+    "save": "保存",
+    "discard": "撤销",
+    "saveBar": "保存",
+    "unsaved": "存在未保存的更改",
+    "saveSuccess": "配置已保存",
+    "saveError": "保存失败",
+    "loadError": "加载配置失败",
+    "colInterface": "接口",
+    "colPath": "路径",
+    "colKey": "配置项",
+    "colStatus": "状态",
+    "colToggle": "开关",
+    "statusOn": "已开启",
+    "statusOff": "已关闭",
+    "toggleTip": "切换开关",
+    "epChat": "Chat Completions",
+    "epResponses": "Responses API",
+    "epImages": "Images Generations",
+    "epImagesNsfw": "Images NSFW",
+    "epModels": "Models",
+    "epFiles": "Files"
   }
 }

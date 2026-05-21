@@ -10,7 +10,7 @@ from fastapi import APIRouter, Depends, File, Form, Query, Request, UploadFile
 from fastapi.responses import JSONResponse, StreamingResponse, FileResponse
 
 from app.control.account.state_machine import is_manageable
-from app.platform.auth.middleware import verify_api_key
+from app.platform.auth.middleware import verify_api_key, verify_downstream_enabled
 from app.platform.errors import AppError, ValidationError
 from app.platform.logging.logger import logger
 from app.platform.storage import image_files_dir, video_files_dir
@@ -61,7 +61,7 @@ def _model_available_for_pools(spec: ModelSpec, pools: frozenset[str]) -> bool:
 # ---------------------------------------------------------------------------
 
 
-@router.get("/models", tags=[_TAG_MODELS], dependencies=[Depends(verify_api_key)])
+@router.get("/models", tags=[_TAG_MODELS], dependencies=[Depends(verify_api_key), Depends(verify_downstream_enabled("models"))])
 async def list_models(request: Request):
     import time
 
@@ -81,7 +81,7 @@ async def list_models(request: Request):
 
 
 @router.get(
-    "/models/{model_id}", tags=[_TAG_MODELS], dependencies=[Depends(verify_api_key)]
+    "/models/{model_id}", tags=[_TAG_MODELS], dependencies=[Depends(verify_api_key), Depends(verify_downstream_enabled("models"))]
 )
 async def get_model_endpoint(model_id: str, request: Request):
     import time
@@ -211,7 +211,7 @@ async def _upload_to_data_uri(upload: UploadFile, *, param: str) -> str:
 
 
 @router.post(
-    "/chat/completions", tags=[_TAG_CHAT], dependencies=[Depends(verify_api_key)]
+    "/chat/completions", tags=[_TAG_CHAT], dependencies=[Depends(verify_api_key), Depends(verify_downstream_enabled("chat_completions"))]
 )
 async def chat_completions_endpoint(req: ChatCompletionRequest):
     _validate_chat(req)
@@ -372,7 +372,7 @@ async def _safe_sse_responses(stream) -> AsyncGenerator[str, None]:
 
 
 @router.post(
-    "/responses", tags=[_TAG_RESPONSES], dependencies=[Depends(verify_api_key)]
+    "/responses", tags=[_TAG_RESPONSES], dependencies=[Depends(verify_api_key), Depends(verify_downstream_enabled("responses"))]
 )
 async def responses_endpoint(req: ResponsesCreateRequest):
     from app.platform.config.snapshot import get_config
@@ -431,7 +431,7 @@ async def responses_endpoint(req: ResponsesCreateRequest):
 
 
 @router.post(
-    "/images/generations", tags=[_TAG_IMAGES], dependencies=[Depends(verify_api_key)]
+    "/images/generations", tags=[_TAG_IMAGES], dependencies=[Depends(verify_api_key), Depends(verify_downstream_enabled("images"))]
 )
 async def image_generations(req: ImageGenerationRequest):
     spec = model_registry.get(req.model)
@@ -451,6 +451,39 @@ async def image_generations(req: ImageGenerationRequest):
         response_format=req.response_format or "url",
         stream=False,
         chat_format=False,
+    )
+    return JSONResponse(result)
+
+
+# ---------------------------------------------------------------------------
+# /v1/images/generations/nsfw (NSFW image generation)
+# ---------------------------------------------------------------------------
+
+
+@router.post(
+    "/images/generations/nsfw",
+    tags=[_TAG_IMAGES],
+    dependencies=[Depends(verify_api_key), Depends(verify_downstream_enabled("images_nsfw"))],
+)
+async def image_generations_nsfw(req: ImageGenerationRequest):
+    spec = model_registry.get(req.model)
+    if spec is None or not spec.enabled or not spec.is_image():
+        raise ValidationError(
+            f"Model {req.model!r} is not an image model", param="model"
+        )
+    _validate_image_n(req.model, req.n or 1, param="n")
+
+    from .images import generate as img_gen
+
+    result = await img_gen(
+        model=req.model,
+        prompt=req.prompt,
+        n=req.n or 1,
+        size=req.size or "1024x1024",
+        response_format=req.response_format or "url",
+        stream=False,
+        chat_format=False,
+        nsfw=True,
     )
     return JSONResponse(result)
 
@@ -574,7 +607,7 @@ async def image_edits(
 # ---------------------------------------------------------------------------
 
 
-@router.get("/files/video", tags=[_TAG_FILES])
+@router.get("/files/video", tags=[_TAG_FILES], dependencies=[Depends(verify_downstream_enabled("files"))])
 async def serve_video(id: str = Query(..., description="Video file ID")):
     """Serve a locally cached video by file ID."""
     import re
@@ -589,7 +622,7 @@ async def serve_video(id: str = Query(..., description="Video file ID")):
     raise ValidationError(f"Video {id!r} not found", param="id")
 
 
-@router.get("/files/image", tags=[_TAG_FILES])
+@router.get("/files/image", tags=[_TAG_FILES], dependencies=[Depends(verify_downstream_enabled("files"))])
 async def serve_image(id: str = Query(..., description="Image file ID")):
     """Serve a locally cached image by file ID."""
     import re

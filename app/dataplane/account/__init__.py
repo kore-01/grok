@@ -140,6 +140,7 @@ class AccountDirectory:
 
             fb.increment_inflight(table, idx)
             fb.update_last_use(table, idx, ts)
+            fb.set_used_lockout(table, idx, ts)   # lock immediately on reserve
             token = table.get_token(idx)
             actual_pool = table.get_pool_id(idx)
 
@@ -207,6 +208,7 @@ class AccountDirectory:
 
             fb.increment_inflight(table, idx)
             fb.update_last_use(table, idx, ts)
+            fb.set_used_lockout(table, idx, ts)   # lock immediately on reserve
             token = table.get_token(idx)
             actual_pool = table.get_pool_id(idx)
 
@@ -219,12 +221,14 @@ class AccountDirectory:
         )
 
     async def release(self, lease: AccountLease) -> None:
-        """Decrement inflight counter for a finished request."""
+        """Decrement inflight counter and apply 15-second used lockout for the lease."""
         table = self._table
         if table is None:
             return
+        ts = now_s()
         async with self._lock:
             fb.decrement_inflight(table, lease.idx)
+            fb.set_used_lockout(table, lease.idx, ts)
 
     # ------------------------------------------------------------------
     # Feedback (hot path)
@@ -255,28 +259,33 @@ class AccountDirectory:
 
         async with self._lock:
             if kind == FeedbackKind.SUCCESS:
+                fb.update_last_use(table, idx, ts)
                 if strategy == "random":
                     fb.apply_success_random(table, idx)
                 else:
                     fb.apply_success_quota(table, idx, mode_id)
 
             elif kind == FeedbackKind.RATE_LIMITED:
+                fb.update_last_fail(table, idx, ts)
                 if strategy == "random":
                     pool_id = int(table.pool_by_idx[idx])
                     cooling_sec = _pool_cooling_sec(pool_id)
                     fb.apply_rate_limited_random(table, idx, cooling_sec=cooling_sec)
                 else:
                     fb.apply_rate_limited_quota(table, idx, mode_id)
-                fb.update_last_fail(table, idx, ts)
 
             elif kind == FeedbackKind.UNAUTHORIZED:
-                fb.apply_auth_failure(table, idx)
                 fb.update_last_fail(table, idx, ts)
+                fb.apply_auth_failure(table, idx)
                 fb.apply_status_change(table, idx, int(StatusId.EXPIRED))
 
             elif kind == FeedbackKind.FORBIDDEN:
-                fb.apply_forbidden(table, idx)
                 fb.update_last_fail(table, idx, ts)
+                fb.apply_forbidden(table, idx)
+
+            elif kind == FeedbackKind.SERVER_ERROR:
+                fb.update_last_fail(table, idx, ts)
+                fb.apply_server_error(table, idx)(table, idx, ts)
 
             elif kind == FeedbackKind.SERVER_ERROR:
                 fb.apply_server_error(table, idx)
