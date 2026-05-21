@@ -244,6 +244,19 @@ docker compose up -d
 ## 模型支持
 > 可通过 `GET /v1/models` 获取当前支持模型列表。
 
+### Chat - Console API（需解决 Cloudflare 拦截问题）
+
+通过 `console.x.ai` 调用，basic 账号理论上可用所有模型，但服务器 IP 被 Cloudflare 拦截，需使用住宅代理或浏览器自动化方案。
+
+| 模型名 | Console 模型 | 默认思考强度 | 说明 |
+| :-- | :-- | :-- | :-- |
+| `grok-4.3` | `grok-4.3` | `high` | Grok 4.3，最新均衡模型 |
+| `grok-4` | `grok-4` | `high` | Grok 4，通用强模型 |
+| `grok-4.20` | `grok-4.20` | `high` | Grok 4.20，稳定版 |
+| `grok-4.20-reasoning` | `grok-4.20-0309-reasoning` | - | 推理型，适合复杂分析 |
+| `grok-4.20-non-reasoning` | `grok-4.20-0309-non-reasoning` | - | 非推理型，速度快 |
+| `grok-4.20-multi-agent` | `grok-4.20-multi-agent-0309` | - | 多智能体，适合复杂任务 |
+
 ### Chat - Web API
 
 需对应 tier 的账号池（basic/super/heavy）。
@@ -261,7 +274,7 @@ docker compose up -d
 | `grok-4.20-0309-reasoning-heavy` | `expert` | `heavy` |
 | `grok-4.20-multi-agent-0309` | `heavy` | `heavy` |
 | `grok-4.20-fast` | `fast` | `basic`，优先使用高等级账号池 |
-| `grok-4.20-auto` | `auto` | `super`，优先使用高等级账号池 |
+| `grok-4.20-auto` | `auto` | `basic`，优先使用高等级账号池 |
 | `grok-4.20-expert` | `expert` | `super`，优先使用高等级账号池 |
 | `grok-4.20-heavy` | `heavy` | `heavy` |
 | `grok-4.3-beta` | `grok-420-computer-use-sa` | `super` |
