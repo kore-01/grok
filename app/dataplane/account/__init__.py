@@ -285,11 +285,7 @@ class AccountDirectory:
 
             elif kind == FeedbackKind.SERVER_ERROR:
                 fb.update_last_fail(table, idx, ts)
-                fb.apply_server_error(table, idx)(table, idx, ts)
-
-            elif kind == FeedbackKind.SERVER_ERROR:
                 fb.apply_server_error(table, idx)
-                fb.update_last_fail(table, idx, ts)
 
             # Quota strategy may receive authoritative quota data from upstream
             # response headers; the random strategy ignores this entirely.
