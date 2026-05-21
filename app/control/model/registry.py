@@ -28,15 +28,47 @@ MODELS: tuple[ModelSpec, ...] = (
 
     # --- 硬优先级反向选池 (heavy → super → basic) ---
     ModelSpec("grok-4.20-fast",                         ModeId.FAST,     Tier.BASIC, Capability.CHAT,       True, "Grok 4.20 Fast",          prefer_best=True),
-    ModelSpec("grok-4.20-auto",                         ModeId.AUTO,     Tier.SUPER, Capability.CHAT,       True, "Grok 4.20 Auto",          prefer_best=True),
+    ModelSpec("grok-4.20-auto",                         ModeId.AUTO,     Tier.BASIC, Capability.CHAT,       True, "Grok 4.20 Auto",          prefer_best=True),
     ModelSpec("grok-4.20-expert",                       ModeId.EXPERT,   Tier.SUPER, Capability.CHAT,       True, "Grok 4.20 Expert",        prefer_best=True),
     ModelSpec("grok-4.20-heavy",                        ModeId.HEAVY,    Tier.HEAVY, Capability.CHAT,       True, "Grok 4.20 Heavy",         prefer_best=True),
 
     # === grok-4.3 (grok-420-computer-use-sa) ==================================
     # Super+（basic 池不支持此模式）
     ModelSpec("grok-4.3-beta",                          ModeId.GROK_4_3, Tier.SUPER, Capability.CHAT,       True, "Grok 4.3 Beta"),
-    # 速率限制由 console.x.ai 控制（免费 tier: 1 rps / 60 RPM）
-    # === Image ==============================================================
+    
+        # === Console API (console.x.ai/v1/responses) ============================
+        # 通过 SSO cookie 直接调用 console.x.ai，basic 账号即可使用所有模型
+        # 速率限制由 console.x.ai 控制（免费 tier: 1 rps / 60 RPM）
+        # Hybrid reasoning models default to effort="high" so callers that omit
+        # reasoning_effort still get the "think hard" experience the model name
+        # implies. Pass an explicit value (e.g. "minimal") to override.
+        ModelSpec("grok-4.3",                               ModeId.FAST, Tier.BASIC, Capability.CHAT,           True, "Grok 4.3 (Console)",                    console_model="grok-4.3",                       default_reasoning_effort="high"),
+        ModelSpec("grok-4",                                 ModeId.FAST, Tier.BASIC, Capability.CHAT,           True, "Grok 4 (Console)",                      console_model="grok-4",                         default_reasoning_effort="high"),
+        ModelSpec("grok-4.20",                              ModeId.FAST, Tier.BASIC, Capability.CHAT,           True, "Grok 4.20 (Console)",                   console_model="grok-4.20",                      default_reasoning_effort="high"),
+        # Fixed-intensity reasoning model — upstream rejects reasoning.effort.
+        ModelSpec("grok-4.20-reasoning",                    ModeId.FAST, Tier.BASIC, Capability.CHAT,           True, "Grok 4.20 Reasoning (Console)",         console_model="grok-4.20-0309-reasoning"),
+        # Non-reasoning model — effort is not applicable.
+        ModelSpec("grok-4.20-non-reasoning",                ModeId.FAST, Tier.BASIC, Capability.CHAT,           True, "Grok 4.20 Non-Reasoning (Console)",     console_model="grok-4.20-0309-non-reasoning"),
+        # Multi-agent — left default; effort behaviour with this variant has not
+        # been verified, so we don't auto-inject "high" to avoid surprising 400s.
+        ModelSpec("grok-4.20-multi-agent",                  ModeId.FAST, Tier.BASIC, Capability.CHAT,           True, "Grok 4.20 Multi-Agent (Console)",       console_model="grok-4.20-multi-agent-0309"),
+    
+        # === Console API (console.x.ai/v1/responses) ============================
+        # 通过 SSO cookie 直接调用 console.x.ai，basic 账号即可使用所有模型
+        # 速率限制由 console.x.ai 控制（免费 tier: 1 rps / 60 RPM）
+        # Hybrid reasoning models default to effort="high" so callers that omit
+        # reasoning_effort still get the "think hard" experience the model name
+        # implies. Pass an explicit value (e.g. "minimal") to override.
+        ModelSpec("grok-4.3",                               ModeId.FAST, Tier.BASIC, Capability.CHAT,           True, "Grok 4.3 (Console)",                    console_model="grok-4.3",                       default_reasoning_effort="high"),
+        ModelSpec("grok-4",                                 ModeId.FAST, Tier.BASIC, Capability.CHAT,           True, "Grok 4 (Console)",                      console_model="grok-4",                         default_reasoning_effort="high"),
+        ModelSpec("grok-4.20",                              ModeId.FAST, Tier.BASIC, Capability.CHAT,           True, "Grok 4.20 (Console)",                   console_model="grok-4.20",                      default_reasoning_effort="high"),
+        # Fixed-intensity reasoning model — upstream rejects reasoning.effort.
+        ModelSpec("grok-4.20-reasoning",                    ModeId.FAST, Tier.BASIC, Capability.CHAT,           True, "Grok 4.20 Reasoning (Console)",         console_model="grok-4.20-0309-reasoning"),
+        # Non-reasoning model — effort is not applicable.
+        ModelSpec("grok-4.20-non-reasoning",                ModeId.FAST, Tier.BASIC, Capability.CHAT,           True, "Grok 4.20 Non-Reasoning (Console)",     console_model="grok-4.20-0309-non-reasoning"),
+        # Multi-agent — left default; effort behaviour with this variant has not
+        # been verified, so we don't auto-inject "high" to avoid surprising 400s.
+        ModelSpec("grok-4.20-multi-agent",                  ModeId.FAST, Tier.BASIC, Capability.CHAT,           True, "Grok 4.20 Multi-Agent (Console)",       console_model="grok-4.20-multi-agent-0309"),
 
     # Basic fast
     ModelSpec("grok-imagine-image-lite",                ModeId.FAST,     Tier.BASIC, Capability.IMAGE,      True, "Grok Imagine Image Lite"),
