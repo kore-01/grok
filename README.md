@@ -2,10 +2,10 @@
 
 [![Python](https://img.shields.io/badge/python-3.13%2B-3776AB?logo=python&logoColor=white)](https://www.python.org/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.119%2B-009688?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
-[![Version](https://img.shields.io/badge/version-2.0.4.rc2-111827)](pyproject.toml)
+[![Version](https://img.shields.io/badge/version-2.0.4.rc4-111827)](pyproject.toml)
 [![License](https://img.shields.io/badge/license-MIT-16a34a)](LICENSE)
 [![English](https://img.shields.io/badge/English-2563EB?logo=bookstack&logoColor=white)](docs/README.en.md)
-[![DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/chenyme/grok2api)
+[![DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/kore-01/grok)
 [![项目文档](https://img.shields.io/badge/项目文档-0F766E?logo=readthedocs&logoColor=white)](https://blog.cheny.me/blog/posts/grok2api)
 
 
@@ -21,7 +21,11 @@ Grok2API 是一个基于 **FastAPI** 构建的 Grok 网关，支持将 Grok Web 
 - 支持多账号池、层级选号、失败反馈、额度同步与自动维护
 - 支持本地缓存图片、视频与本地代理链接返回
 - 支持文生图、图像编辑、文生视频、图生视频
-- 内置 Admin 后台管理、Web Chat、Masonry 生图、ChatKit 语音页面
+- **Console API 模式**：支持 `grok-4.3`、`grok-4`、`grok-4.20` 等模型，basic 账号即可使用全部模型
+- **账号 Lockout 机制**：防止同一账号被并发请求重复选中，提升轮转效率
+- **账号导入/导出**：支持批量导入 SSO token，支持导出全部账号 token
+- **Downstream 下游开关**：可独立控制各 API 端点的下游访问权限
+- 内置 Admin 后台管理（账号管理、配置管理、缓存管理、下游开关）、Web Chat、Masonry 生图、ChatKit 语音页面
 
 <br>
 
@@ -94,8 +98,8 @@ flowchart LR
 ### 本地部署
 
 ```bash
-git clone https://github.com/chenyme/grok2api
-cd grok2api
+git clone https://github.com/kore-01/grok
+cd grok
 cp .env.example .env
 uv sync
 uv run granian --interface asgi --host 0.0.0.0 --port 8000 --workers 1 app.main:app
@@ -104,19 +108,19 @@ uv run granian --interface asgi --host 0.0.0.0 --port 8000 --workers 1 app.main:
 ### Docker Compose
 
 ```bash
-git clone https://github.com/chenyme/grok2api
-cd grok2api
+git clone https://github.com/kore-01/grok
+cd grok
 cp .env.example .env
 docker compose up -d
 ```
 
 ### Vercel
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/chenyme/grok2api&env=LOG_LEVEL,LOG_FILE_ENABLED,DATA_DIR,LOG_DIR,ACCOUNT_STORAGE,ACCOUNT_REDIS_URL,ACCOUNT_MYSQL_URL,ACCOUNT_POSTGRESQL_URL)
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/kore-01/grok&env=LOG_LEVEL,LOG_FILE_ENABLED,DATA_DIR,LOG_DIR,ACCOUNT_STORAGE,ACCOUNT_REDIS_URL,ACCOUNT_MYSQL_URL,ACCOUNT_POSTGRESQL_URL)
 
 ### Render
 
-[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/chenyme/grok2api)
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/kore-01/grok)
 
 ### 首次启动
 
@@ -136,6 +140,7 @@ docker compose up -d
 | 账号管理 | `/admin/account` |
 | 配置管理 | `/admin/config` |
 | 缓存管理 | `/admin/cache` |
+| 下游开关 | `/admin/downstream` |
 | WebUI 登录页 | `/webui/login` |
 | Web Chat | `/webui/chat` |
 | Masonry | `/webui/masonry` |
@@ -202,6 +207,7 @@ docker compose up -d
 | `proxy.clearance` | `mode`, `cf_cookies`, `user_agent`, `browser`, `flaresolverr_url`, `timeout_sec`, `refresh_interval` |
 | `retry` | `reset_session_status_codes`, `max_retries`, `on_codes` |
 | `account.refresh` | `basic_interval_sec`, `super_interval_sec`, `heavy_interval_sec`, `usage_concurrency`, `on_demand_min_interval_sec` |
+| `account.selection` | `max_inflight` |
 | `cache.local` | `image_max_mb`, `video_max_mb` |
 | `chat` | `timeout` |
 | `image` | `timeout`, `stream_timeout` |
@@ -210,6 +216,20 @@ docker compose up -d
 | `asset` | `upload_timeout`, `download_timeout`, `list_timeout`, `delete_timeout` |
 | `nsfw` | `timeout` |
 | `batch` | `nsfw_concurrency`, `refresh_concurrency`, `asset_upload_concurrency`, `asset_list_concurrency`, `asset_delete_concurrency` |
+| `downstream` | `chat_completions`, `responses`, `models`, `images`, `videos`, `messages` |
+
+### 下游开关配置
+
+可通过 `/admin/downstream` 页面或直接编辑 `${DATA_DIR}/config.toml` 中的 `[downstream]` 节独立控制各端点的下游访问：
+
+| 配置项 | 说明 | 默认值 |
+| :-- | :-- | :-- |
+| `chat_completions` | `/v1/chat/completions` 端点 | `true` |
+| `responses` | `/v1/responses` 端点 | `true` |
+| `models` | `/v1/models` 端点 | `true` |
+| `images` | `/v1/images/*` 端点 | `true` |
+| `videos` | `/v1/videos` 端点 | `true` |
+| `messages` | `/v1/messages` 端点 | `true` |
 
 ### 图片、视频格式
 
@@ -224,7 +244,22 @@ docker compose up -d
 ## 模型支持
 > 可通过 `GET /v1/models` 获取当前支持模型列表。
 
-### Chat
+### Chat - Console API（basic 账号可用）
+
+通过 SSO Cookie 直接调用 `console.x.ai`，basic 账号即可使用所有模型。速率限制由 console.x.ai 控制（免费 tier: 1 rps / 60 RPM）。
+
+| 模型名 | Console 模型 | 默认思考强度 | 说明 |
+| :-- | :-- | :-- | :-- |
+| `grok-4.3` | `grok-4.3` | `high` | Grok 4.3，最新均衡模型 |
+| `grok-4` | `grok-4` | `high` | Grok 4，通用强模型 |
+| `grok-4.20` | `grok-4.20` | `high` | Grok 4.20，稳定版 |
+| `grok-4.20-reasoning` | `grok-4.20-0309-reasoning` | - | 推理型，适合复杂分析 |
+| `grok-4.20-non-reasoning` | `grok-4.20-0309-non-reasoning` | - | 非推理型，速度快 |
+| `grok-4.20-multi-agent` | `grok-4.20-multi-agent-0309` | - | 多智能体，适合复杂任务 |
+
+### Chat - Web API
+
+需对应 tier 的账号池（basic/super/heavy）。
 
 | 模型名 | mode | tier |
 | :-- | :-- | :-- |
@@ -263,6 +298,29 @@ docker compose up -d
 | 模型名 | mode | tier |
 | :-- | :-- | :-- |
 | `grok-imagine-video` | `auto` | `super` |
+
+<br>
+
+## 账号管理
+
+### Admin 后台
+
+- **账号管理** `/admin/account`：查看、导入、导出账号 SSO token
+- **配置管理** `/admin/config`：运行时配置编辑
+- **缓存管理** `/admin/cache`：本地缓存的图片/视频文件管理
+- **下游开关** `/admin/downstream`：各 API 端点下游访问控制
+
+### 账号导入
+
+支持批量导入 SSO token，每行一个。导入后账号自动进入刷新流程，检测可用性。
+
+### 账号导出
+
+在账号管理页面点击「导出」按钮，可导出全部活跃账号的原始 SSO token（每行一个），便于备份或迁移。
+
+### Lockout 机制
+
+账号每次被选中使用后，会有 15 秒的 lockout 保护期，防止同一账号被并发请求重复选中。此机制配合账号池轮转，显著提升多并发场景下的账号利用率。
 
 <br>
 
@@ -606,4 +664,4 @@ curl -L http://localhost:8000/v1/videos/<video_id>/content \
 
 ## Star History
 
-[![Star History Chart](https://api.star-history.com/svg?repos=Chenyme/grok2api&type=Timeline)](https://star-history.com/#Chenyme/grok2api&Timeline)
+[![Star History Chart](https://api.star-history.com/svg?repos=kore-01/grok&type=Timeline)](https://star-history.com/#kore-01/grok&Timeline)
