@@ -220,7 +220,12 @@ def is_invalid_credentials_error(exc: BaseException) -> bool:
         return False
     if exc.status not in (400, 401, 403):
         return False
-    return is_invalid_credentials_body(str(exc.details.get("body", "") or ""))
+    body = str(exc.details.get("body", "") or "")
+    # Grok sometimes returns 401 with an empty body for expired tokens.
+    # Treat any 401 with an empty body as an invalid-credentials failure.
+    if exc.status == 401 and not body.strip():
+        return True
+    return is_invalid_credentials_body(body)
 
 
 def _proxy_feedback_kind_for_error(

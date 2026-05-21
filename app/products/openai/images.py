@@ -278,6 +278,7 @@ async def generate(
     response_format: str  = "url",
     stream:          bool = False,
     chat_format:     bool = False,
+    nsfw:            bool | None = None,
 ) -> dict | AsyncGenerator[str, None]:
     """Generate images.
 
@@ -286,6 +287,11 @@ async def generate(
       grok-imagine-image       → WebSocket speed mode (super+)
       grok-imagine-image-pro   → WebSocket quality mode (super+)
 
+    Args:
+      nsfw: When ``True`` or ``False``, forces the NSFW flag regardless of
+            config.  When ``None`` (default), falls back to
+            ``features.enable_nsfw``.
+
     Returns:
       Non-streaming: OpenAI images.generations dict, or chat dict if chat_format=True.
       Streaming:     async generator of SSE strings.
@@ -293,7 +299,7 @@ async def generate(
     cfg          = get_config()
     spec         = resolve_model(model)
     aspect_ratio = resolve_aspect_ratio(size)
-    enable_nsfw  = cfg.get_bool("features.enable_nsfw", True)
+    enable_nsfw  = nsfw if nsfw is not None else cfg.get_bool("features.enable_nsfw", True)
 
     from app.dataplane.account import _directory as _acct_dir
     if _acct_dir is None:

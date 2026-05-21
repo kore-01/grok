@@ -7,15 +7,25 @@ import base64
 import random
 import re
 import string
+import time
 import uuid
 from typing import Optional
 from urllib.parse import urlparse
 
+from curl_cffi import requests as curl_requests
 
 from app.platform.logging.logger import logger
 from app.platform.config.snapshot import get_config
 from app.control.proxy.models import ProxyLease
 from app.dataplane.proxy.adapters.profile import ProxyProfile, resolve_proxy_profile
+
+# ---------------------------------------------------------------------------
+# __cf_bm cookie cache (short-lived Cloudflare bot-management cookie)
+# ---------------------------------------------------------------------------
+
+_CF_BM_CACHE: str = ""
+_CF_BM_TIME: float = 0.0
+_CF_BM_TTL: float = 900.0  # 15 minutes
 
 # ---------------------------------------------------------------------------
 # Unicode → ASCII normalisation map
@@ -164,6 +174,29 @@ def _resolve_profile(lease: ProxyLease | None) -> ProxyProfile:
     return resolve_proxy_profile(lease)
 
 
+def _get_cf_bm(*, browser: str | None = None) -> str:
+    """Fetch a fresh ``__cf_bm`` cookie from grok.com (Cloudflare bot management)."""
+    global _CF_BM_CACHE, _CF_BM_TIME
+    now = time.time()
+    if _CF_BM_CACHE and now - _CF_BM_TIME < _CF_BM_TTL:
+        return _CF_BM_CACHE
+    try:
+        resp = curl_requests.get(
+            "https://grok.com",
+            impersonate=browser or "chrome136",
+            timeout=10,
+        )
+        bm = dict(resp.cookies).get("__cf_bm", "")
+        if bm:
+            _CF_BM_CACHE = bm
+            _CF_BM_TIME = now
+            logger.debug("cf_bm refreshed: len={}", len(bm))
+        return bm
+    except Exception as exc:
+        logger.warning("cf_bm refresh failed: {}", exc)
+        return _CF_BM_CACHE
+
+
 # ---------------------------------------------------------------------------
 # Public builders
 # ---------------------------------------------------------------------------
@@ -214,6 +247,14 @@ def build_sso_cookie(
 
     if eff_cookies:
         cookie += f"; {eff_cookies}"
+
+    # Ensure __cf_bm is present (Cloudflare bot-management cookie).
+    # If the effective cookies string lacks it, fetch a fresh one.
+    if "__cf_bm=" not in cookie:
+        bm = _get_cf_bm()
+        if bm:
+            cookie += f"; __cf_bm={bm}"
+
     return cookie
 
 

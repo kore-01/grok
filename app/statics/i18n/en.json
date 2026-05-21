@@ -20,6 +20,7 @@
     "account": "Account Management",
     "config": "Configuration Management",
     "cache": "Cache Management",
+    "downstream": "Downstream",
     "languageLabel": "Language",
     "logout": "Sign Out",
     "versionDialogTitle": "Version",
@@ -699,5 +700,30 @@
     "startFailed": "Failed to start: {message}",
     "cancelInProgress": "Cancellation requested. Wait for the current batch to finish.",
     "na": "—"
+  },
+  "downstream": {
+    "pageTitle": "Grok2API - Downstream Management",
+    "pageSubtitle": "Control exposure of downstream API endpoints",
+    "save": "Save",
+    "discard": "Undo",
+    "saveBar": "Save",
+    "unsaved": "Unsaved changes detected",
+    "saveSuccess": "Configuration saved",
+    "saveError": "Failed to save",
+    "loadError": "Failed to load configuration",
+    "colInterface": "Interface",
+    "colPath": "Path",
+    "colKey": "Config Key",
+    "colStatus": "Status",
+    "colToggle": "Toggle",
+    "statusOn": "Enabled",
+    "statusOff": "Disabled",
+    "toggleTip": "Toggle switch",
+    "epChat": "Chat Completions",
+    "epResponses": "Responses API",
+    "epImages": "Images Generations",
+    "epImagesNsfw": "Images NSFW",
+    "epModels": "Models",
+    "epFiles": "Files"
   }
 }

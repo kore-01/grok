@@ -17,6 +17,7 @@ class ModeId(IntEnum):
 
     def to_api_str(self) -> str:
         _OVERRIDES: dict[int, str] = {
+            ModeId.AUTO: "fast",  # upstream no longer accepts "auto"
             ModeId.GROK_4_3: "grok-420-computer-use-sa",
         }
         return _OVERRIDES.get(self, self.name.lower())  # type: ignore[arg-type]

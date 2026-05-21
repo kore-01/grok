@@ -154,6 +154,23 @@ async def list_tokens(repo: "AccountRepository" = Depends(get_repo)):
     return _json({"tokens": [_serialize_record(r) for r in all_items]})
 
 
+@router.get("/tokens/export", response_class=Response)
+async def export_tokens(repo: "AccountRepository" = Depends(get_repo)):
+    """Export all active tokens as raw SSO strings, one per line."""
+    all_items: list = []
+    page_num = 1
+    while True:
+        page = await repo.list_accounts(ListAccountsQuery(page=page_num, page_size=2000))
+        all_items.extend(page.items)
+        if page_num * 2000 >= page.total:
+            break
+        page_num += 1
+
+    lines = [r.token for r in all_items if not r.is_deleted()]
+    content = "\n".join(lines)
+    return Response(content=content, media_type="text/plain")
+
+
 @router.post("/tokens")
 async def save_tokens(
     req: SaveTokensRequest,

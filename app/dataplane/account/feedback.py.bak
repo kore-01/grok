@@ -145,18 +145,6 @@ def decrement_inflight(table: AccountRuntimeTable, idx: int) -> None:
 
 def update_last_use(table: AccountRuntimeTable, idx: int, now_s: int) -> None:
     table.last_use_at_by_idx[idx] = now_s
-    # 15-second used lockout: prevent immediate re-selection of the same account
-    table.used_lockout_until_s_by_idx[idx] = now_s + 15
-
-
-# Lockout duration in seconds — prevents the same account from being
-# re-selected immediately after a request completes.
-_USED_LOCKOUT_DURATION_S = 15
-
-
-def set_used_lockout(table: AccountRuntimeTable, idx: int, now_s: int) -> None:
-    """Set 15-second lockout on account idx after successful use."""
-    table.used_lockout_until_s_by_idx[idx] = now_s + _USED_LOCKOUT_DURATION_S
 
 
 def update_last_fail(table: AccountRuntimeTable, idx: int, now_s: int) -> None:
@@ -195,5 +183,4 @@ __all__ = [
     "decrement_inflight",
     "update_last_use",
     "update_last_fail",
-    "set_used_lockout",
 ]
