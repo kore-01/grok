@@ -13,6 +13,7 @@ class ModeId(IntEnum):
     EXPERT = 2
     HEAVY = 3
     GROK_4_3 = 4
+    CONSOLE = 5
 
 
 class PoolId(IntEnum):
