@@ -72,9 +72,9 @@ _POOL_DEFAULTS: dict[str, AccountQuotaSet] = {
 }
 
 _SUPPORTED_MODE_IDS_BY_POOL: dict[str, frozenset[int]] = {
-    "basic": frozenset((1,)),
-    "super": frozenset((0, 1, 2, 4)),
-    "heavy": frozenset((0, 1, 2, 3, 4)),
+    "basic": frozenset((1, 5)),
+    "super": frozenset((0, 1, 2, 4, 5)),
+    "heavy": frozenset((0, 1, 2, 3, 4, 5)),
 }
 
 # ---------------------------------------------------------------------------
@@ -117,7 +117,7 @@ def supported_mode_ids(pool: str) -> tuple[int, ...]:
     supported = _SUPPORTED_MODE_IDS_BY_POOL.get(
         pool, _SUPPORTED_MODE_IDS_BY_POOL["basic"]
     )
-    return tuple(mode_id for mode_id in (0, 1, 2, 3, 4) if mode_id in supported)
+    return tuple(mode_id for mode_id in (0, 1, 2, 3, 4, 5) if mode_id in supported)
 
 
 def default_quota_window(pool: str, mode_id: int) -> QuotaWindow | None:
