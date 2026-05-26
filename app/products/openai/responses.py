@@ -33,7 +33,6 @@ from .chat import (
     _resolve_image,
     _quota_sync,
     _fail_sync,
-    _parse_retry_codes,
     _feedback_kind,
     _log_task_exception,
     _upstream_body_excerpt,
@@ -50,7 +49,6 @@ from app.dataplane.reverse.protocol.tool_prompt import (
     build_tool_system_prompt,
     extract_tool_names,
     inject_into_message,
-    tool_calls_to_xml,
 )
 from app.dataplane.reverse.protocol.tool_parser import parse_tool_calls
 from ._tool_sieve import ToolSieve
@@ -526,14 +524,38 @@ async def create(
 
     cfg = get_config()
     spec = resolve_model(model)
-    mode_id = int(spec.mode_id)  # cast once, reuse everywhere
 
     messages: list[dict] = []
     if instructions:
         messages.append({"role": "system", "content": instructions})
     messages.extend(_parse_input(input_val))
 
-    # ── Console API dispatch ─────────────────────────────────────────────────
+    # ── Console Chat API dispatch (new) ────────────────────────────────────────
+    # Models with CONSOLE_CHAT capability route through console.x.ai/v1/responses
+    # using xai_console_chat protocol. Basic-tier (free) accounts, independent
+    # quota, built-in web/x search, multi-agent support.
+    if spec.is_console_chat():
+        from .console_responses import create as console_responses_create
+        from ._format import make_resp_id
+        logger.info(
+            "console chat responses dispatch: model={} stream={} message_count={}",
+            model,
+            stream,
+            len(messages),
+        )
+        return await console_responses_create(
+            model=model,
+            messages=messages,
+            stream=stream,
+            emit_think=emit_think,
+            temperature=temperature,
+            top_p=top_p,
+            response_id=make_resp_id("resp"),
+            reasoning_id=make_resp_id("rs"),
+            message_id=make_resp_id("msg"),
+        )
+
+    # ── Console API dispatch (legacy) ──────────────────────────────────────────
     # Models with `console_model` set route through console.x.ai/v1/responses
     # (OpenAI Responses API native), supporting all models for basic-tier
     # accounts via SSO cookies.

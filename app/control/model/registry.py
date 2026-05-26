@@ -35,20 +35,23 @@ MODELS: tuple[ModelSpec, ...] = (
     # === grok-4.3 (grok-420-computer-use-sa) ==================================
     # Super+（basic 池不支持此模式）
     ModelSpec("grok-4.3-beta",                          ModeId.GROK_4_3, Tier.SUPER, Capability.CHAT,       True, "Grok 4.3 Beta"),
-    
-        # === Console API (console.x.ai/v1/responses) ============================
-        # 通过 SSO cookie 直接调用 console.x.ai，basic 账号即可使用所有模型
-        # 速率限制由 console.x.ai 控制（免费 tier: 1 rps / 60 RPM）
-        # Hybrid reasoning models default to effort="high" so callers that omit
-        # reasoning_effort still get the "think hard" experience the model name
-        # implies. Pass an explicit value (e.g. "minimal") to override.
-        # 暂时禁用：Cloudflare 检测到异常流量模式触发 403，待评估后恢复
-        # ModelSpec("grok-4.3",                            ModeId.FAST, Tier.BASIC, Capability.CHAT,           True, "Grok 4.3 (Console)",                    console_model="grok-4.3",                       default_reasoning_effort="high"),
-        # ModelSpec("grok-4",                              ModeId.FAST, Tier.BASIC, Capability.CHAT,           True, "Grok 4 (Console)",                      console_model="grok-4",                         default_reasoning_effort="high"),
-        # ModelSpec("grok-4.20",                           ModeId.FAST, Tier.BASIC, Capability.CHAT,           True, "Grok 4.20 (Console)",                   console_model="grok-4.20",                      default_reasoning_effort="high"),
-        # ModelSpec("grok-4.20-reasoning",                 ModeId.FAST, Tier.BASIC, Capability.CHAT,           True, "Grok 4.20 Reasoning (Console)",         console_model="grok-4.20-0309-reasoning"),
-        # ModelSpec("grok-4.20-non-reasoning",             ModeId.FAST, Tier.BASIC, Capability.CHAT,           True, "Grok 4.20 Non-Reasoning (Console)",     console_model="grok-4.20-0309-non-reasoning"),
-        # ModelSpec("grok-4.20-multi-agent",               ModeId.FAST, Tier.BASIC, Capability.CHAT,           True, "Grok 4.20 Multi-Agent (Console)",       console_model="grok-4.20-multi-agent-0309"),
+
+    # === Console Chat (console.x.ai/v1/responses) ===========================
+    # 通过 console.x.ai 路由，使用 grok.com SSO token，免费账号可用
+    # basic pool 即可（不消耗 grok.com 配额，走 console API 独立配额）
+    ModelSpec("grok-4.3-console",                       ModeId.CONSOLE,  Tier.BASIC, Capability.CONSOLE_CHAT, True, "Grok 4.3 (Console)"),
+    ModelSpec("grok-4.3-low",                           ModeId.CONSOLE,  Tier.BASIC, Capability.CONSOLE_CHAT, True, "Grok 4.3 Low Thinking"),
+    ModelSpec("grok-4.3-medium",                        ModeId.CONSOLE,  Tier.BASIC, Capability.CONSOLE_CHAT, True, "Grok 4.3 Medium Thinking"),
+    ModelSpec("grok-4.3-high",                          ModeId.CONSOLE,  Tier.BASIC, Capability.CONSOLE_CHAT, True, "Grok 4.3 High Thinking"),
+    ModelSpec("grok-4.20-0309-reasoning-console",       ModeId.CONSOLE,  Tier.BASIC, Capability.CONSOLE_CHAT, True, "Grok 4.20 0309 Reasoning (Console)"),
+    ModelSpec("grok-4.20-0309-console",                 ModeId.CONSOLE,  Tier.BASIC, Capability.CONSOLE_CHAT, True, "Grok 4.20 0309 (Console)"),
+    ModelSpec("grok-4.20-multi-agent-console",          ModeId.CONSOLE,  Tier.BASIC, Capability.CONSOLE_CHAT, True, "Grok 4.20 Multi-Agent (Console)"),
+    ModelSpec("grok-4.20-multi-agent-low",              ModeId.CONSOLE,  Tier.BASIC, Capability.CONSOLE_CHAT, True, "Grok 4.20 Multi-Agent Low"),
+    ModelSpec("grok-4.20-multi-agent-medium",           ModeId.CONSOLE,  Tier.BASIC, Capability.CONSOLE_CHAT, True, "Grok 4.20 Multi-Agent Medium"),
+    ModelSpec("grok-4.20-multi-agent-high",             ModeId.CONSOLE,  Tier.BASIC, Capability.CONSOLE_CHAT, True, "Grok 4.20 Multi-Agent High"),
+    ModelSpec("grok-4.20-multi-agent-xhigh",            ModeId.CONSOLE,  Tier.BASIC, Capability.CONSOLE_CHAT, True, "Grok 4.20 Multi-Agent XHigh"),
+    ModelSpec("grok-4.20-0309-non-reasoning-console",   ModeId.CONSOLE,  Tier.BASIC, Capability.CONSOLE_CHAT, True, "Grok 4.20 0309 Non-Reasoning (Console)"),
+    ModelSpec("grok-build-console",                     ModeId.CONSOLE,  Tier.BASIC, Capability.CONSOLE_CHAT, True, "Grok Build 0.1 (Console)"),
 
     # Basic fast
     ModelSpec("grok-imagine-image-lite",                ModeId.FAST,     Tier.BASIC, Capability.IMAGE,      True, "Grok Imagine Image Lite"),

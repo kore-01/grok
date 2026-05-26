@@ -12,8 +12,10 @@ BASE = "https://grok.com"
 ASSETS_CDN = "https://assets.grok.com"
 CONSOLE_BASE = "https://console.x.ai"
 
-# ── Console API (SSO-shared with grok.com, supports all models) ────────
-CONSOLE_RESPONSES = f"{CONSOLE_BASE}/v1/responses"
+# ── Console API (console.x.ai) ───────────────────────────────────────────
+# 使用 Bearer token 认证，与 grok.com SSO token 共享同一套凭证
+CONSOLE_RESPONSES = f"{CONSOLE_BASE}/v1/responses"             # POST (OpenAI Responses API)
+CONSOLE_CHAT      = f"{CONSOLE_BASE}/v1/chat/completions"      # POST (OpenAI Chat API)
 
 # ── App-chat (SSE streaming, new conversation) ──────────────────────────
 CHAT = f"{BASE}/rest/app-chat/conversations/new"
@@ -50,7 +52,7 @@ __all__ = [
     "BASE",
     "ASSETS_CDN",
     "CONSOLE_BASE",
-    "CONSOLE_RESPONSES",
+    "CONSOLE_RESPONSES", "CONSOLE_CHAT",
     "CHAT",
     "ASSETS_UPLOAD",
     "ASSETS_LIST",

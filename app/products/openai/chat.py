@@ -962,7 +962,22 @@ async def completions(
         len(messages),
     )
 
-    # ── Console API dispatch ──────────────────────────────────────────────────
+    # ── Console Chat API dispatch (new) ────────────────────────────────────────
+    # Models with CONSOLE_CHAT capability route through console.x.ai/v1/responses
+    # using xai_console_chat protocol. Basic-tier (free) accounts, independent
+    # quota, built-in web/x search, multi-agent support.
+    if spec.is_console_chat():
+        from .console_chat import completions as console_chat_completions
+        return await console_chat_completions(
+            model=model,
+            messages=messages,
+            stream=is_stream,
+            emit_think=emit_think,
+            temperature=temperature,
+            top_p=top_p,
+        )
+
+    # ── Console API dispatch (legacy) ──────────────────────────────────────────
     # Models with `console_model` set route through console.x.ai/v1/responses
     # using the same SSO cookies as grok.com, but support all models for
     # basic-tier (free) accounts. Supports multimodal input and native

@@ -70,6 +70,10 @@ class ModelSpec:
         """Return True if this model routes through console.x.ai."""
         return bool(self.console_model)
 
+    def is_console_chat(self) -> bool:
+        """通过 console.x.ai/v1/responses 路由的模型。"""
+        return bool(self.capability & Capability.CONSOLE_CHAT)
+
     def pool_name(self) -> str:
         """Return the canonical pool string for this tier."""
         if self.tier == Tier.SUPER:
