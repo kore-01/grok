@@ -51,6 +51,7 @@ ALL_MODE_IDS: tuple[int, ...] = (
     int(ModeId.EXPERT),
     int(ModeId.HEAVY),
     int(ModeId.GROK_4_3),
+    int(ModeId.CONSOLE),
 )
 
 __all__ = [

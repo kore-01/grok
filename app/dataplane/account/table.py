@@ -179,7 +179,7 @@ class AccountRuntimeTable:
     def _quota_col(self, mode_id: int) -> "array.array[int]":
         if mode_id == 0:
             return self.quota_auto_by_idx
-        if mode_id == 1:
+        if mode_id in (1, 5):  # CONSOLE reuses fast quota
             return self.quota_fast_by_idx
         if mode_id == 2:
             return self.quota_expert_by_idx
@@ -190,7 +190,7 @@ class AccountRuntimeTable:
     def _reset_col(self, mode_id: int) -> "array.array[int]":
         if mode_id == 0:
             return self.reset_auto_at_by_idx
-        if mode_id == 1:
+        if mode_id in (1, 5):  # CONSOLE reuses fast quota
             return self.reset_fast_at_by_idx
         if mode_id == 2:
             return self.reset_expert_at_by_idx
@@ -201,7 +201,7 @@ class AccountRuntimeTable:
     def _total_col(self, mode_id: int) -> "array.array[int]":
         if mode_id == 0:
             return self.total_auto_by_idx
-        if mode_id == 1:
+        if mode_id in (1, 5):  # CONSOLE reuses fast quota
             return self.total_fast_by_idx
         if mode_id == 2:
             return self.total_expert_by_idx
@@ -212,7 +212,7 @@ class AccountRuntimeTable:
     def _window_col(self, mode_id: int) -> "array.array[int]":
         if mode_id == 0:
             return self.window_auto_by_idx
-        if mode_id == 1:
+        if mode_id in (1, 5):  # CONSOLE reuses fast quota
             return self.window_fast_by_idx
         if mode_id == 2:
             return self.window_expert_by_idx
